@@ -63,7 +63,7 @@ Technical Requirements:
   - Python 3.x
   - Python libraries: socket, threading, time (optional for the timer feature), and random.
   - Git for version control.
-  - IDE: Visual Studio Code or PyCharm.
+  - IDE: Visual Studio Code.
   - Operating system: Windows, macOS, or Linux.
 
 Assumptions:
@@ -81,9 +81,8 @@ Roles and Responsibilities:
 
 Communication Plan:
 
-- Weekly check-ins via email or messaging platform (e.g., Discord or Teams) to track progress.
+- Weekly check-ins to track progress.
 - Use GitHub or another version control system for code sharing and tracking updates.
-- Milestone reviews at the end of each week.
 
 Additional Notes:
 
