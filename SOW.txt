@@ -1,0 +1,91 @@
+Project Title: Competitive Multiplayer Hangman Game
+
+Team: LAN SOLO
+
+Project Objective: To develop a Python-based competitive multiplayer hangman game using client-server architecture, where two players compete by guessing letters in a shared word. 
+The game will involve real-time communication between clients and a server, handling game state updates, and displaying progress (including visual representations of hangmen) in a 
+command-line interface.
+
+Scope:
+
+- Inclusions:
+
+  - Develop a server that handles game logic, manages game state, and synchronizes communication between two players.
+  - Implement a client that allows users to input guesses and view their own hangman, the letter count of the word, and their opponent's progress.
+  - Alternating turns between players.
+  - Command-line interface (CLI) for both clients and server.
+  - Error handling for invalid input, network failures, and disconnected clients.
+  - Basic visual representation of the hangman in the terminal using ASCII art.
+  - A system to handle word selection, letter guessing, and end-game conditions (win/lose/draw).
+
+- Exclusions:
+
+  - Graphical User Interface (GUI) development.
+  - AI player or automated opponent.
+  - Advanced network security features beyond basic error handling.
+  - Persistent player profiles or scorekeeping across sessions.
+
+Deliverables:
+
+- Fully functional Python server and client scripts that meet the project’s technical requirements.
+- Detailed documentation explaining how to run the server and clients, including all necessary command-line arguments.
+- Screenshots of client and server processes running simultaneously.
+- Final project presentation (optional based on class requirements).
+
+Timeline: 
+
+- Week 1: Project setup, initial research, and environment configuration.
+- Week 2: Implement server-client communication and basic game state management.
+- Week 3: Develop core game mechanics (alternating turns, word/letter guessing, win/loss conditions).
+- Week 4: Add ASCII art visual representation of hangman.
+- Week 5: Test and debug multiplayer functionality and error handling.
+- Week 6: Final testing, code cleanup, and documentation preparation.
+- Week 7: Final submission and presentation (if applicable).
+
+Task Breakdown:
+
+- Research & setup: 4 hours
+- Basic server-client architecture: 8 hours
+- Game logic implementation: 12 hours
+- ASCII art representation and CLI formatting: 6 hours
+- Error handling and testing: 8 hours
+- Final documentation and cleanup: 6 hours
+
+Technical Requirements:
+
+- Hardware:
+
+  - Any standard computer with internet access.
+  - Optional: Local network setup for testing purposes.
+
+- Software:
+
+  - Python 3.x
+  - Python libraries: socket, threading, time (optional for the timer feature), and random.
+  - Git for version control.
+  - IDE: Visual Studio Code or PyCharm.
+  - Operating system: Windows, macOS, or Linux.
+
+Assumptions:
+
+- Both players will have reliable network connectivity to participate in the game.
+- The server will be hosted on a computer with a stable internet connection.
+- All required software and libraries will be readily available to the team during development.
+
+Roles and Responsibilities:
+
+- Developer(s): Samuel Wade – Responsible for coding the server, client, and game logic, as well as testing.
+- Project Manager: Samuel Wade – Oversee project progress, manage timeline, and ensure deliverables are met.
+- Tester(s): Samuel Wade – Test the game functionality, debug issues, and ensure smooth gameplay.
+- Documenter: Samuel Wade – Write detailed instructions and comments for the codebase, as well as user documentation.
+
+Communication Plan:
+
+- Weekly check-ins via email or messaging platform (e.g., Discord or Teams) to track progress.
+- Use GitHub or another version control system for code sharing and tracking updates.
+- Milestone reviews at the end of each week.
+
+Additional Notes:
+
+- Ensure cross-platform compatibility for running the game on different operating systems.
+- The visual representation will be kept simple to avoid cluttering the CLI.
