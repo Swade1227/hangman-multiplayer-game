@@ -5,7 +5,7 @@ This is a simple competitive multiplayer hangman game implemented using Python a
 **How to play:**
 1. **Start the server:** Run the `server.py` script to initiate the game server.
 2. **Connect clients:** Run the `client.py` script on two different machines or terminals to join the game.
-3. **Player input:** "exit" will close the connection, and as of now anything anything else will be broadcasted to the other player
+3. **Player input:** "exit" will close the connection, and as of now anything other input will be broadcasted to the other player
 
 _Not Implemented Yet:_
 
