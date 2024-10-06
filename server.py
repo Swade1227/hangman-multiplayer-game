@@ -2,7 +2,6 @@ import socket
 import threading
 import sys
 import logging
-from datetime import datetime
 
 # Global variables
 host = '127.0.0.1'
