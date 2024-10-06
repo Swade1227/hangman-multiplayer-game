@@ -19,28 +19,37 @@ logging.basicConfig(
     ]
 )
 
+# Function to broadcast a message to all clients
+def broadcast(message, client_socket):
+    for client in clients:
+        if client != client_socket:  # Don't send the message to the sender
+            try:
+                client.send(message)
+            except:
+                client.close()
+                clients.remove(client)
+
 # Function to handle individual client connections
+
 def handle_client(client_socket, address):
-    logging.info(f"[NEW CONNECTION] {address} connected.")
+    print(f"[NEW CONNECTION] {address} connected.")
     clients.append(client_socket)
 
     while True:
         try:
-            message = client_socket.recv(1024).decode('utf-8')
+            message = client_socket.recv(1024)
             if message:
-                logging.info(f"[{address}] {message}")
-                # Echo message back to the client
-                client_socket.send("Message received!".encode('utf-8'))
+                print(f"[{address}] {message.decode('utf-8')}")
+                # Send the message to all other clients
+                broadcast(message, client_socket)
             else:
                 raise ConnectionError("Client disconnected.")
         except Exception as e:
-            logging.error(f"[ERROR] {address} disconnected: {e}")
+            print(f"[ERROR] {address} disconnected: {e}")
             break
 
-    # Remove client after disconnection
     clients.remove(client_socket)
     client_socket.close()
-    logging.info(f"[DISCONNECTED] {address} connection closed.")
 
 # Function to start the server and listen for incoming connections
 def start_server():
