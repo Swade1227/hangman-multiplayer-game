@@ -2,22 +2,33 @@ import socket
 import threading
 import random
 import sys
+import logging
+
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("client.log.txt"),  # Log to file
+        logging.StreamHandler()  # Log to terminal
+    ]
+)
 
 # Function to generate a random 4-digit client ID
 def generate_client_id():
     return str(random.randint(1000, 9999))
 
 # Function to handle receiving messages from the server
-def receive_messages(client_socket, client_id):
-    while True:
+def receive_messages(client_socket, client_id, running):
+    while running[0]:  # Check the shared running flag
         try:
             message = client_socket.recv(1024)
 
             # Handle empty messages (i.e., server might have closed the connection)
             if not message:
-                print("Connection closed by the server.")
-                client_socket.close()
-                break
+                logging.debug("\nConnection closed by the server.")
+                running[0] = False  # Set running to False to signal exit
+                break  # Exit the loop
 
             decoded_message = message.decode('utf-8')
 
@@ -30,39 +41,45 @@ def receive_messages(client_socket, client_id):
 
         except UnicodeDecodeError:
             # Handle specific decoding errors
-            print("Error decoding message from the server.")
+            logging.info("Error decoding message from the server.")
         except Exception as e:
-            print(f"Error receiving message from the server: {e}")
-            client_socket.close()
-            break
+            logging.debug(f"Error receiving message from the server: {e}")
+            running[0] = False  # Set running to False to signal exit
+            break  # Exit the loop
 
 
 def client_program(client_id):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('127.0.0.1', 12345))
-    print("[CONNECTED] Connected to the server.")
+    logging.info("[CONNECTED] Connected to the server.")
 
     # Generate and send client ID to the server
     client_socket.send(client_id.encode('utf-8'))
-    print(f"Assigned Client ID: {client_id}")
+    logging.info(f"Assigned Client ID: {client_id}")
+
+    running = [True]  # Shared flag for controlling the thread
 
     # Start a thread to continuously listen for messages from the server
-    thread = threading.Thread(target=receive_messages, args=(client_socket,client_id))
+    thread = threading.Thread(target=receive_messages, args=(
+        client_socket, client_id, running))
     thread.start()
 
     # Allow the client to send messages
-    while True:
+    while running[0]:  # Continue only if the server is running
         try:
             message = input(client_id + ': ')
             if message.lower() == 'exit':
                 client_socket.send(message.encode('utf-8'))
-                client_socket.close()
-                break
+                break  # Break the loop to go to cleanup
             client_socket.send(message.encode('utf-8'))
         except Exception as e:
             print(f"Error sending message: {e}")
-            client_socket.close()
-            break
+            running[0] = False  # Set running to False to signal exit
+            break  # Break the loop on error
+
+    logging.info("Closing connection...")
+    client_socket.close()  # Close the socket before exiting
+    sys.exit(0)  # Ensure the program exits
 
 
 if __name__ == '__main__':
