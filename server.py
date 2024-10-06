@@ -19,9 +19,17 @@ def broadcast(message, client_socket):
                 client.close()
                 clients.remove(client)
 
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("server.log"),  # Log to file
+        logging.StreamHandler()  # Log to terminal
+    ]
+)
+
 # Function to handle individual client connections
-
-
 def handle_client(client_socket, address):
     print(f"[NEW CONNECTION] {address} connected.")
     clients.append(client_socket)
