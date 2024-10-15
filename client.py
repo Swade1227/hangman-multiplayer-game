@@ -4,14 +4,24 @@ import random
 import sys
 import logging
 
-# Set up logging
+# Set up logging: one handler for the file and one for the console
+file_handler = logging.FileHandler("client.log.txt")
+# Save all debug and higher-level logs to the file
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(message)s'))
+
+console_handler = logging.StreamHandler()
+# Only show INFO and higher-level logs on the console
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(message)s'))
+
+# Set up the root logger
 logging.basicConfig(
+    # Overall level (this is needed to ensure debug logs are captured)
     level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("client.log.txt"),  # Log to file
-        logging.StreamHandler()  # Log to terminal
-    ]
+    handlers=[file_handler, console_handler]
 )
 
 # Function to generate a random 4-digit client ID
@@ -78,7 +88,6 @@ def client_program(client_id):
             break  # Break the loop on error
 
     logging.info("Closing connection...")
-    client_socket.close()  # Close the socket before exiting
     sys.exit(0)  # Ensure the program exits
 
 
