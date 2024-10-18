@@ -6,7 +6,7 @@ import sys
 host = ''
 port = 12345
 
-# Configure logging to write to 'server.log.txt'
+# configure logging to write to 'server.log.txt'
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -16,7 +16,7 @@ logging.basicConfig(
     ]
 )
 
-# Lock for managing turn order or shared resources
+# lock for managing turn order or shared resources
 lock = threading.Lock()
 
 clients = []
@@ -25,7 +25,8 @@ game_state = {
     "clients": [],
 }
 
-client_id_counter = 0  # Counter to keep track of client IDs
+# counter to keep track of client IDs
+client_id_counter = 0  
 
 
 def notify_client_turn(client_socket):
@@ -37,21 +38,26 @@ def notify_client_turn(client_socket):
 
 
 def handle_client(client_socket, client_id):
-    global client_id_counter  # Access the global client_id_counter
+
+    # access lient_id_counter
+    global client_id_counter  
     logging.info(f"Handling client {client_id}.")
 
     try:
-        # Notify the client of connection and instructions only once
+
+        # welcome message
         client_socket.sendall(
             b"Welcome! Type 'pass' to pass your turn or 'exit' to leave.\n")
 
         while True:
             try:
                 message = client_socket.recv(1024).decode('utf-8').strip()
+                
+                # client disconnected
                 if not message:
-                    break  # Client has disconnected
+                    break  
 
-                # Process client message
+                # process client message
                 with lock:
                     if game_state["turn"] == client_id:
                         if message.lower() == "pass":
@@ -66,14 +72,14 @@ def handle_client(client_socket, client_id):
                         elif message.lower() == "exit":
                             logging.info(
                                 f"Client {client_id} requested to exit.")
-                            break  # Exit the loop to disconnect the client
+                            break  
                         else:
                             client_socket.sendall(b"")
                     else:
                         client_socket.sendall(b"Not your turn.\n")
             except (ConnectionResetError, ConnectionAbortedError):
                 logging.warning(f"Client {client_id} disconnected abruptly.")
-                break  # Client disconnected abruptly
+                break  
 
     finally:
         logging.info(f"Client {client_id} disconnected.")
@@ -83,10 +89,10 @@ def handle_client(client_socket, client_id):
             if client_id in game_state["clients"]:
                 game_state["clients"].remove(client_id)
 
-            # Decrement the client_id_counter when a client disconnects
+            # decrement lient_id_counter when client disconnects
             client_id_counter -= 1
 
-            # Update game state in case of disconnect
+            # update game state in case of disconnect
             if len(game_state["clients"]) > 0:
                 game_state["turn"] = game_state["turn"] % len(
                     game_state["clients"])
@@ -95,10 +101,12 @@ def handle_client(client_socket, client_id):
 
 
 def start_server():
-    global client_id_counter  # Access the global client_id_counter
+    global client_id_counter 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
-    server_socket.listen(2)  # Limit to 2 clients
+
+    # limit server connectino to 2 clients
+    server_socket.listen(2) 
 
     logging.info("Server started, waiting for clients...")
     try:
@@ -115,11 +123,11 @@ def start_server():
                 target=handle_client, args=(client_socket, client_id_counter))
             thread.start()
 
-            # Notify if the client connected and is immediately the first to have their turn
+            # first turn
             if len(game_state["clients"]) == 1:
                 notify_client_turn(client_socket)
 
-            client_id_counter += 1  # Increment the client ID counter for the next client
+            client_id_counter += 1  
 
     except KeyboardInterrupt:
         logging.info("Server shutting down gracefully...")
