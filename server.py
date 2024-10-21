@@ -1,179 +1,189 @@
 import socket
 import threading
-import sys
 import logging
-from threading import Lock
+import sys
 
-clients_lock = Lock()
-client_ids_lock = Lock()
-client_game_state_lock = Lock()
-
-# Global variables
 host = ''
 port = 12345
-clients = []  # List to keep track of connected clients
-client_ids = {}  # Dictionary to map client sockets to their IDs
-guess_word = ['a', 'b', 'c', 'd']  # Target word
 
-# Dictionary to store each client's game state (guessed word, target word)
-client_game_state = {}
-
-# Set up logging
+# configure logging to write to 'server.log.txt'
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.FileHandler("server.log.txt"),
-        logging.StreamHandler()
+        logging.StreamHandler(sys.stdout)
     ]
 )
 
+# lock for managing turn order or shared resources
+lock = threading.Lock()
 
-def guess_letter(guess, player_word):
-    updated_word = list(player_word)
-    for i, letter in enumerate(guess_word):
-        if guess == letter:
-            updated_word[i] = letter
+clients = []
+client_words = {}  # Store each client's unique word
+game_state = {
+    "turn": 0,
+    "clients": [],
+}
 
-    # Return the updated word as a string
-    return ''.join(updated_word)
+global_word = "networking"
 
-# Function to broadcast a message to all client
-def broadcast(message, client_socket):
-    for client in clients:
-        # Don't send the message to the sender
-        if client != client_socket:
-            try:
-                client.send(message)
-            except socket.error as e:
-                logging.error(f"Socket error occurred: {e}")
-                client.close()
-                clients.remove(client)
+# starting word per client
 
-# Function to send a message to a specific client
-def send_to_client(client_socket, message):
+
+def create_blank_word():
+
+    return ['_' for _ in global_word]
+
+
+# counter to keep track of client IDs
+client_id_counter = 0
+
+# remembers correct guesses
+
+
+def update_client_word(client_id, guessed_letter):
+    client_word = client_words.get(client_id)
+    if client_word:
+        for idx, letter in enumerate(global_word):
+            if letter == guessed_letter:
+                client_word[idx] = guessed_letter
+        return client_word
+    return None
+
+
+def notify_client_turn(client_socket):
     try:
-        client_socket.send(message.encode('utf-8'))
-    except socket.error as e:
-        logging.error(f"Error sending message to client: {e}")
+        client_socket.sendall(b"It's your turn!\n")
+    except (BrokenPipeError, ConnectionResetError):
+        logging.warning("Failed to notify client of turn. Connection might be broken.")
+
+
+def handle_client(client_socket, client_id):
+
+    # access lient_id_counter
+    global client_id_counter
+    logging.info(f"Handling client {client_id}.")
+
+    try:
+
+        # welcome message
+        client_socket.sendall(b"Welcome! Type 'pass' to pass your turn or 'exit' to leave.\n")
+
+        while True:
+            try:
+                message = client_socket.recv(1024).decode('utf-8').strip()
+
+                # client disconnected
+                if not message:
+                    break
+
+                # process client message
+                with lock:
+                    if game_state["turn"] == client_id:
+                        # client guessed a letter
+                        if len(message) == 1 and message.isalpha():  
+                            guessed_letter = message.lower()
+                            if guessed_letter in global_word:
+                                client_word = update_client_word(client_id, guessed_letter)
+                                logging.info(f"Client {client_id} guessed correctly: {guessed_letter}")
+                                client_socket.sendall(f"Correct! Your word: {''.join(client_word)}\n".encode('utf-8'))
+                            else:
+                                logging.info(f"Client {client_id} guessed incorrectly: {guessed_letter}")
+                                client_socket.sendall(b"Incorrect guess.\n")
+
+                            # move to next turn
+                            game_state["turn"] = (game_state["turn"] + 1) % len(game_state["clients"])
+                            next_client_socket = clients[game_state["turn"]]
+                            notify_client_turn(next_client_socket)
+
+                        elif message.lower() == "pass":
+                            logging.info(f"Client {client_id} passed their turn.")
+                            # Move to the next client's turn
+                            game_state["turn"] = (game_state["turn"] + 1) % len(game_state["clients"])
+                            next_client_socket = clients[game_state["turn"]]
+                            notify_client_turn(next_client_socket)
+                        elif message.lower() == "exit":
+                            logging.info(f"Client {client_id} requested to exit.")
+                            break  # Exit the loop to disconnect the client
+                        else:
+                            client_socket.sendall(b"Invalid input. Guess a letter, 'pass' or 'exit'.\n")
+                    else:
+                        client_socket.sendall(b"Not your turn.\n")
+            except (ConnectionResetError, ConnectionAbortedError):
+                logging.warning(f"Client {client_id} disconnected abruptly.")
+                break  # Client disconnected abruptly
+
+    finally:
+        # Handle disconnection
+        logging.info(f"Client {client_id} disconnected.")
+        with lock:
+            if client_socket in clients:
+                clients.remove(client_socket)
+                client_socket.sendall(b"Game is resetting due to a disconnection.\n")
+
+                # Notify the remaining client
+                if game_state["clients"]:
+                    remaining_client_id = 0
+                    if len(clients) > 1:
+                        remaining_client_socket = clients[remaining_client_id]
+                        remaining_client_socket.sendall(b"A player has disconnected. The game is resetting.\n")
+
+            if client_id in game_state["clients"]:
+                game_state["clients"].remove(client_id)
+                del client_words[client_id]
+
+            # Reset unique words for a new game
+            client_words.clear()
+            for client in game_state["clients"]:
+                # Reset each player's word
+                client_words[client] = create_blank_word()
+
+            # Reset the turn to the first player
+            if len(game_state["clients"]) > 0:
+                game_state["turn"] = 0
+
+        client_id_counter -= 1
         client_socket.close()
-        if client_socket in clients:
-            clients.remove(client_socket)
 
-# Function to handle individual client connections
-def handle_client(client_socket, address):
-    global guess_word
-    player1_word = ['_', '_', '_', '_']
-    logging.info(f"[NEW CONNECTION] {address} connected.")
 
-    # Safely add client
-    with clients_lock:
-        clients.append(client_socket)
-
-    # Receive the client's ID when they first connect
-    client_id = client_socket.recv(1024).decode('utf-8')
-   
-    # Safely store client ID
-    with client_ids_lock:
-        client_ids[client_socket] = client_id
-
-    logging.info(f"[{address}] Assigned Client ID: {client_id}")
-
-    # Initialize the player's word to be empty (underscore for unguessed letters)
-    player_word = ['_'] * len(guess_word)  # A blank word initially
-    
-    # Safely save this player's word state
-    with client_game_state_lock:
-        client_game_state[client_socket] = player_word
-
-    while True:
-        try:
-            message = client_socket.recv(1024)
-            if message:
-
-                if message.decode('utf-8') == 'exit':
-                    logging.info(f"Client {client_id} has requested to exit.")
-
-                    # Notify other clients
-                    broadcast(f"Player {client_id} has disconnected.".encode(
-                        'utf-8'), client_socket)
-                    logging.info(f"Client {client_id} has disconnected.")
-                    break  # Exit the loop to end the connection
-
-                if message.decode('utf-8')[:5] == "check":
-
-                    # Send the current state of the player's guessed word
-                    player_word = client_game_state[client_socket]
-                    send_to_client(
-                        client_socket, f"Current Word: {''.join(player_word)}")
-                    logging.info(
-                        f"Client {client_id} checked their word: {''.join(player_word)}")
-
-                elif message.decode('utf-8')[:5] == "guess":
-
-                    guessed_letter = message.decode('utf-8')[6:7]
-                    player_word = client_game_state[client_socket]
-                    updated_word = guess_letter(guessed_letter, player_word)
-                    client_game_state[client_socket] = list(updated_word)
-
-                    # Send the updated word back to the guessing client
-                    send_to_client(
-                        client_socket, f"Updated Word: {updated_word}")
-
-                    # Optionally log the updated word
-                    logging.info(
-                        f"[{client_id}] Guessed {guessed_letter}, Updated word: {updated_word}")
-
-                else:
-                    # Prefix the message with the client's ID before broadcasting
-                    broadcast(f"{client_id}: {message.decode('utf-8')}".encode('utf-8'), client_socket)
-                    logging.info(f"[{client_id}] {message.decode('utf-8')}")
-                    # print("message: ", message.decode('utf-8')[:5])
-             
-        except Exception as e:
-            logging.debug(f"[ERROR] {address} disconnected: {e}")
-            break
-
-    # Clean up client state on disconnection
-    with clients_lock:
-        clients.remove(client_socket)
-
-    with client_ids_lock:
-        del client_ids[client_socket]
-
-    with client_game_state_lock:
-        if client_socket in client_game_state:
-            del client_game_state[client_socket]
-
-    client_socket.close()
-
-# Function to start the server and listen for incoming connections
 def start_server():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((host, port))
-    server.listen()
-    logging.info(f"[LISTENING] Server is listening on {host}:{port}")
+    global client_id_counter
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((host, port))
+
+    # limit server connectino to 2 clients
+    server_socket.listen(2)
+
+    logging.info("Server started, waiting for clients...")
     try:
         while True:
-            client_socket, client_address = server.accept()
+            client_socket, addr = server_socket.accept()
 
-            # Create a new thread to handle the client connection
+            logging.info(f"Client {client_id_counter} connected from {addr}.")
+
+            with lock:
+                clients.append(client_socket)
+                game_state["clients"].append(client_id_counter)
+                client_words[client_id_counter] = create_blank_word()
+
             thread = threading.Thread(
-                target=handle_client, args=(client_socket, client_address))
+                target=handle_client, args=(client_socket, client_id_counter))
             thread.start()
-            logging.info(
-                f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+
+            # first turn
+            if len(game_state["clients"]) == 1:
+                notify_client_turn(client_socket)
+
+            client_id_counter += 1
+
     except KeyboardInterrupt:
-        logging.debug("[SHUTTING DOWN] Server is shutting down...")
-    finally:
-        # Cleanup: close all client sockets
+        logging.info("Server shutting down...")
         for client in clients:
             client.close()
-        server.close()
-        logging.info(
-            "[CLEANUP] Closed all client connections and server socket.")
+        server_socket.close()
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    logging.info("[STARTING] Server is starting...")
     start_server()
