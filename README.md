@@ -5,15 +5,9 @@ This is a simple competitive multiplayer hangman game implemented using Python a
 **How to play:**
 1. **Start the server:** Run the `server.py` script to initiate the game server.
 2. **Connect clients:** Run the `client.py` script on two different machines or terminals to join the game.
-3. **Player input:** "exit" will close the connection, and as of now anything other input will be broadcasted to the other player
+3. **Player input:** any single character input will count as a guess, "pass" wills skip your turn, and "exit" will close the connection.
 
-_Not Implemented Yet:_
-
-**Play the game:** 
-1. clients connect to server and get intro text from server
-2. clients always have an input line, and to start both plays must input "ready" to ready up and start the game
-3. once game starts players have input line and specified commands like "guess" (folowed by a letter for their guess), "check" (displays both players hangmen states), and "quit" (exits game without issue).
-4. The server would handle each clients gamestates but must be linked temporally so that the players have to guess a letter in turns. 5. Players take turns guessing letters in rounds. The first player to guess the word or outlast the opponent (without completing their hangman) wins!
+NOTE: As of now there is no win condition
 
 **Technologies used:**
 * Python
@@ -23,3 +17,50 @@ _Not Implemented Yet:_
 **Additional resources:**
 * [Python documentation](https://docs.python.org/3/)
 * [Python sockets tutorial](https://realpython.com/python-sockets/)
+
+# Game Message Protocol Specification
+
+## Overview
+
+This document specifies the message types exchanged between the server and clients in the word guessing game, including their structure and expected responses.
+
+## Message Types
+
+### Join
+- **Purpose**: Automatically sent when a client runs the client program to join the game.
+- **Format**: Happens automatically upon running `client.py`.
+- **Expected Server Response**: 
+  - `Welcome! Type 'pass' to pass your turn or 'exit' to leave.`
+
+### Guess
+- **Purpose**: Sent by a client to make a letter guess.
+- **Format**: `<single_character>`
+  - *Example*: A single alphabetic character (e.g., "a")
+- **Expected Server Response**:
+  - **Correct Guess**: 
+    - `Correct! Your word: <updated_word>`
+    - *Example*: `Correct! Your word: n_______n_`
+  - **Incorrect Guess**: 
+    - `Incorrect guess.`
+
+### Pass
+- **Purpose**: Sent by a client to skip their turn.
+- **Format**: `"PASS"`
+- **Expected Server Response**: 
+  - *(empty response or confirmation, optional)*
+
+### Exit
+- **Purpose**: Sent by a client to exit the game.
+- **Format**: `"EXIT"`
+- **Expected Server Response**: 
+  - `Disconnected from server.`
+
+### Game Update
+- **Purpose**: Sent by the server to provide updates regarding the game state, such as the current state of the word, or game reset if necessary.
+- **Expected Response**: 
+  - `<updated client word>`
+
+### Turn Notification
+- **Purpose**: Sent by the server to inform a client that it is their turn.
+- **Expected Response**: 
+  - `It's your turn!`
