@@ -2,9 +2,13 @@ import socket
 import threading
 import logging
 import sys
+import argparse
 
 host = ''
 port = 12345
+
+# clears the server log file 
+open("client.log.txt", "w").close()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,19 +36,17 @@ def receive_messages(sock):
             break
 
 
-def main():
+def main(host, port):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect((host, port))
         logging.info(f"Connected to server at {host}:{port}")
 
-        # start thread
-        threading.Thread(target=receive_messages, args=(client_socket,)).start()
+        threading.Thread(target=receive_messages,
+                         args=(client_socket,)).start()
 
         while True:
-            # input line
             message = input()
-
             if message == "exit":
                 client_socket.send(message.encode('utf-8'))
                 logging.info("Sent exit command to server.")
@@ -66,4 +68,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Connect to the server.")
+    parser.add_argument('--host', required=True,
+                        help="Server IP address or hostname to connect to")
+    parser.add_argument('--port', type=int, required=True,
+                        help="Port on which the server is listening")
+    args = parser.parse_args()
+
+    main(args.host, args.port)
