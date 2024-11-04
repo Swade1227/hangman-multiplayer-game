@@ -3,9 +3,11 @@
 This is a simple competitive multiplayer hangman game implemented using Python and sockets.
 
 **How to play:**
-1. **Start the server:** Run the `server.py` script to initiate the game server.
-2. **Connect clients:** Run the `client.py` script on two different machines or terminals to join the game.
-3. **Player input:** any single character input will count as a guess, "pass" wills skip your turn, and "exit" will close the connection.
+1. **Start the server:** Run the `server.py` script to initiate the game server with specified address and port
+   ex: python server.py --host localhost --port 12345
+3. **Connect clients:** Run the `client.py` script on two different machines or terminals to join the game with specified address and port.
+   ex: python client.py --host localhost --port 12345
+5. **Player input:** any single character input will count as a guess, "pass" wills skip your turn, and "exit" will close the connection.
 
 NOTE: As of now there is no win condition
 
