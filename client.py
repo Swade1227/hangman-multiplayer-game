@@ -7,7 +7,9 @@ import argparse
 host = ''
 port = 12345
 
-# clears the server log file 
+# =========== LOGGING ===========
+
+# clears the server log file
 open("client.log.txt", "w").close()
 
 logging.basicConfig(
@@ -18,6 +20,8 @@ logging.basicConfig(
     ]
 )
 
+
+# =========== RECIEVE FROM SERVER ===========
 
 def receive_messages(sock):
     while True:
@@ -42,8 +46,7 @@ def main(host, port):
         client_socket.connect((host, port))
         logging.info(f"Connected to server at {host}:{port}")
 
-        threading.Thread(target=receive_messages,
-                         args=(client_socket,)).start()
+        threading.Thread(target=receive_messages, args=(client_socket,)).start()
 
         while True:
             message = input()
@@ -69,10 +72,8 @@ def main(host, port):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Connect to the server.")
-    parser.add_argument('--host', required=True,
-                        help="Server IP address or hostname to connect to")
-    parser.add_argument('--port', type=int, required=True,
-                        help="Port on which the server is listening")
+    parser.add_argument('--host', required=True, help="Server IP address or hostname to connect to")
+    parser.add_argument('--port', type=int, required=True, help="Port on which the server is listening")
     args = parser.parse_args()
 
     main(args.host, args.port)
