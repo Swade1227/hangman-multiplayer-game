@@ -3,6 +3,7 @@ import threading
 import logging
 import sys
 import argparse
+import random
 
 host = ''
 port = 12345
@@ -34,7 +35,9 @@ game_state = {
     "clients": [],
 }
 
-global_word = "networking"
+
+WORD_LIST = ["net", "python", "server", "socket", "client"]
+global_word = "net"
 
 # counter to keep track of client IDs
 client_id_counter = 0
@@ -66,8 +69,36 @@ def notify_client_turn(client_socket):
     try:
         client_socket.sendall(b"It's your turn!\n")
     except (BrokenPipeError, ConnectionResetError):
-        logging.warning(
-            "Failed to notify client of turn. Connection might be broken.")
+        logging.warning( "Failed to notify client of turn. Connection might be broken.")
+
+
+def reset_game():
+
+
+    logging.info("Resetting Game State")
+
+    """Resets the game state for a new round."""
+    global global_word, client_words
+
+    
+    global_word = random.choice(WORD_LIST)
+    logging.info(f"The new word is: {global_word} (hidden from clients)")
+        
+    logging.info("")
+
+    # Reset each client's progress
+    for client_id in game_state["clients"]:
+        client_words[client_id] = create_blank_word()
+
+    # Reset the turn to the first player
+    game_state["turn"] = 0
+
+    # Notify all clients of the reset
+    broadcast_message("The game has been reset! A new word has been chosen.\n")
+
+    # Notify the first client of their turn
+    first_client_socket = clients[game_state["turn"]]
+    # notify_client_turn(first_client_socket)
 
 
 # =============== CLIENT HANDLING ===============
@@ -81,7 +112,7 @@ def handle_client(client_socket, client_id):
     try:
 
         # welcome message
-        client_socket.sendall(b"Welcome! Type 'pass' to pass your turn or 'exit' to leave.\n")
+        client_socket.sendall(b"Welcome! Type a letter to guess or 'exit' to leave.\n")
 
         while True:
             try:
@@ -102,6 +133,11 @@ def handle_client(client_socket, client_id):
                                 client_word = update_client_word(client_id, guessed_letter)
                                 logging.info(f"Client {client_id} guessed correctly: {guessed_letter}")
                                 client_socket.sendall(f"Correct! Your word: {''.join(client_word)}\n".encode('utf-8'))
+
+                                if '_' not in client_word:
+                                    broadcast_message(f"Client {client_id } has won...\nWord was: {global_word}\n")
+                                    reset_game()
+
                             else:
                                 logging.info(f"Client {client_id} guessed incorrectly: {guessed_letter}")
                                 client_socket.sendall(b"Incorrect guess.\n")
@@ -113,23 +149,12 @@ def handle_client(client_socket, client_id):
                             # notify next client its their turn
                             notify_client_turn(next_client_socket)
 
-                        elif message.lower() == "pass":
-
-                            logging.info(f"Client {client_id} passed their turn.")
-                            
-                            # move to the next client's turn
-                            game_state["turn"] = (game_state["turn"] + 1) % len(game_state["clients"])
-                            next_client_socket = clients[game_state["turn"]]
-
-                            # notify next client its their turn
-                            notify_client_turn(next_client_socket)
-
                         elif message.lower() == "exit":
 
                             logging.info(f"Client {client_id} requested to exit.")
                             break  # exit the loop to disconnect the client
                         else:
-                            client_socket.sendall(b"Invalid input. Guess a letter, 'pass' or 'exit'.\n")
+                            client_socket.sendall(b"Invalid input. Guess a letter or 'exit'.\n")
                     else:
                         client_socket.sendall(b"Not your turn.\n")
             except (ConnectionResetError, ConnectionAbortedError):
