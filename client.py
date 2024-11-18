@@ -72,8 +72,10 @@ def main(host, port):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Connect to the server.")
-    parser.add_argument('--host', required=True, help="Server IP address or hostname to connect to")
-    parser.add_argument('--port', type=int, required=True, help="Port on which the server is listening")
+    parser.add_argument('-i', '--host', required=True,
+                        help="Server IP address or hostname to connect to")
+    parser.add_argument('-p', '--port', type=int, required=True,
+                        help="Port on which the server is listening")
     args = parser.parse_args()
 
     main(args.host, args.port)

@@ -195,9 +195,9 @@ def handle_client(client_socket, client_id):
 def start_server(host, port):
     global client_id_counter
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((host, port))
+    server_socket.bind(("0.0.0.0", port))
     server_socket.listen(2)
-    logging.info("Server started, waiting for clients...")
+    logging.info(f"Server started on 0.0.0.0:{port}, waiting for clients...")
 
     try:
         while True:
@@ -226,8 +226,8 @@ def start_server(host, port):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Start the server.")
-    parser.add_argument('--host', default='localhost', help="Host to bind the server to")
-    parser.add_argument('--port', type=int, default=12345, help="Port to bind the server to")
+    parser.add_argument('-p', '--port', type=int,
+                        required=True, help="Port to bind the server to")
     args = parser.parse_args()
 
-    start_server(args.host, args.port)
+    start_server('0.0.0.0', args.port)

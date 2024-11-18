@@ -3,13 +3,13 @@
 This is a simple competitive multiplayer hangman game implemented using Python and sockets.
 
 **How to play:**
-1. **Start the server:** Run the `server.py` script to initiate the game server with specified address and port
-   ex: python server.py --host localhost --port 12345
-3. **Connect clients:** Run the `client.py` script on two different machines or terminals to join the game with specified address and port.
-   ex: python client.py --host localhost --port 12345
-5. **Player input:** any single character input will count as a guess, "pass" wills skip your turn, and "exit" will close the connection.
-
-NOTE: As of now there is no win condition
+1. **Start the server:** Run the `server.py` script to initiate the game server (server -p PORT)
+   ex: python server.py -p 12345
+2. **Connect clients:** Run the `client.py` script on two different machines or terminals to join the game (client -i SERVER_IP/DNS -p PORT)
+   ex: python client.py -i 127.0.0.1 -p 12345
+3. **Game Objective:** The goal of the game is to guess the secret word letter by letter. 
+4. **Player input:** any single character input will count as a guess and "exit" will close the connection.
+5. **Win condition:** a player wins the game by correctly guessing each letter of word. Upon winning the game is reset and a new word is selected.
 
 **Technologies used:**
 * Python
@@ -29,7 +29,7 @@ This document specifies the message types exchanged between the server and clien
 ## Message Types
 
 ### Join
-- **Purpose**: Automatically sent when a client runs the client program to join the game.
+- **Purpose**: Automatically sent when a client runs the client program to join the game. Assigns unique ID to each client.
 - **Format**: Happens automatically upon running `client.py`.
 - **Expected Server Response**: 
   - `Welcome! Type 'pass' to pass your turn or 'exit' to leave.`
@@ -44,12 +44,6 @@ This document specifies the message types exchanged between the server and clien
     - *Example*: `Correct! Your word: n_______n_`
   - **Incorrect Guess**: 
     - `Incorrect guess.`
-
-### Pass
-- **Purpose**: Sent by a client to skip their turn.
-- **Format**: `"PASS"`
-- **Expected Server Response**: 
-  - *(empty response or confirmation, optional)*
 
 ### Exit
 - **Purpose**: Sent by a client to exit the game.
