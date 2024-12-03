@@ -36,7 +36,7 @@ game_state = {
 }
 
 
-WORD_LIST = ["net", "python", "server", "socket", "client"]
+WORD_LIST = ["python", "server", "socket", "client","database", "algorithm", "function", "API", "port","connection", "protocol", "packet", "encryption", "security","request", "response", "debug", "thread", "multithreading","scripting", "web", "interface", "cloud", "storage", "load","json", "xml", "framework", "frontend", "backend", "performance"]
 global_word = "net"
 
 # counter to keep track of client IDs
