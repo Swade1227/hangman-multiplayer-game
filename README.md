@@ -20,6 +20,20 @@ This is a simple competitive multiplayer hangman game implemented using Python a
 * [Python documentation](https://docs.python.org/3/)
 * [Python sockets tutorial](https://realpython.com/python-sockets/)
 
+**Current bugs**
+- Turn mismanagment when a player starts solo game and other client joins after.
+- Reads repeated input as new input
+
+**Security/Risk Evaluation**
+- Lack of Input Validation: As of now there is not extensive input validation on the client's guessing inputs
+  - Fix: Check the input and exclude anything other than A-Z and a-z.
+
+- No Encryption: As of now there is no encryption on the communication between the server and clients
+  - Fix: Implement TLS to encrypt data sent between the server and the clients
+
+- No Logging Security: As of now there is not much consideration for security with the log files. If someone were to somehow access to them it would reveal the client and servers IP Addresses.
+   - Fix: Remove the IP Address logging in both the serer and client logging system.
+
 # Game Message Protocol Specification
 
 ## Overview
