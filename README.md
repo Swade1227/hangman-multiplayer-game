@@ -74,3 +74,23 @@ This document specifies the message types exchanged between the server and clien
 - **Purpose**: Sent by the server to inform a client that it is their turn.
 - **Expected Response**: 
   - `It's your turn!`
+  - 
+
+# Retrospective 
+
+**What Went Well:**
+
+Overall I think the project developement as a whole went fairly smoothly, and it was quite fun putting it together. I particularly enjoyed introducing the game mechanics once all the baseline mechanics were done. The shared game information like the client words and the guess words ended up being easier to implement than I had initally predicted. 
+
+**What Could be Improved On:**
+
+There are a lot of things that could improve the game, but I think the biggest improvement as of now would be introducing a way to fully guess a word in one turn because as of now the clients have to guess each letter individually. This would introduce another level of competition to the game and make it feel more like a race as it's intended to be. There is also a fairly major bug that messes up the turn handling logic when a user starts a solo game but has another client join halfway through. 
+
+
+# Roadmap
+
+**Game Mechanics**
+If I were to continue developing the game there are several changes I would make. The first major update would involve game mechanics and specifically handling repeat guesses so that the user's don't accidently waste their turns. It would also introduce a way for the clients to guess full word if they think they know it as opposed to spelling the whole thing out. Next I'd introduce a system that allows each client to see the other client's progress (i.e. how much of the word they've guessed), that way they are more exposed to the competitive aspect of the game. Perhaps even further down the line I could implement some kind of visual indicator to go along with the clients guess word bank to make it a little more fun. 
+
+**Server / Client Implementation**
+In the future I would implement a more secure handling of the server and server/client log files to prevent access from malicious users to ensure the game is fair. I would probably also scale the game up to have more than a max of two player through implementing a robust queue allowing users to join the game and then choose from a list of connected clients to start a 1v1 or solo game.
